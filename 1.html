@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>견적 계산기</title>
+<style>
+  html,body{height:100%;margin:0;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans KR",system-ui,sans-serif;background:#f5f6f7;}
+  .wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .card{width:760px;max-width:96vw;background:#fff;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,0.08);padding:22px;position:relative;}
+  h2{margin:0 0 6px 0;font-size:22px}
+  .company-line{font-size:14px;color:#333;margin:0 0 10px 0;}
+  .items{margin-top:8px;}
+  .row{display:flex;align-items:center;justify-content:space-between;padding:10px;border-bottom:1px solid #f0f0f0;}
+  .left{display:flex;align-items:center;gap:12px;}
+  .name{min-width:320px;font-size:15px;color:#222;}
+  .qty-controls{display:flex;align-items:center;gap:8px;}
+  button.btn{padding:6px 10px;border:1px solid #d0d0d0;background:#fff;border-radius:8px;cursor:pointer;font-size:14px;}
+  button.btn:active{transform:translateY(1px)}
+  input.qty{width:84px;padding:6px;border:1px solid #e0e0e0;border-radius:6px;text-align:center;font-size:14px;}
+  .total{margin-top:18px;padding-top:14px;border-top:1px dashed #eee;display:flex;flex-direction:column;gap:6px;align-items:flex-end;}
+  .total .line{display:flex;justify-content:space-between;width:100%;align-items:center;font-weight:700;font-size:20px;}
+  .note{font-size:13px;color:#666;margin-top:6px;text-align:right;}
+  .top-right{position:absolute;top:18px;right:18px;}
+  .controls{display:flex;gap:8px;align-items:center;margin-top:12px;}
+  .small{font-size:13px;color:#666;}
+  /* 항목 단가 노출 금지: 화면에 금액 표시하는 부분은 total만 보임 */
+  .price-hidden{color:transparent;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card" id="estimator">
+    <div class="top-right">
+      <button id="adminBtn" class="btn">관리자</button>
+    </div>
+
+    <h2>견적 계산기</h2>
+    <div class="company-line">시공 업체: 하어스텝</div>
+    <div class="company-line">전화 : 010-3738-8864</div>
+
+    <div class="items" id="items">
+      <!-- 항목들: data-key 로 내부 단가 매핑 -->
+      <div class="row" data-key="door">
+        <div class="left"><label><input type="checkbox" class="enable" checked /></label><div class="name">현관문</div></div>
+        <div class="qty-controls">
+          <button class="btn" data-action="dec">-</button>
+          <input type="number" class="qty" value="0" min="0" />
+          <button class="btn" data-action="inc">+</button>
+        </div>
+      </div>
+
+      <div class="row" data-key="ceiling_molding">
+        <div class="left"><label><input type="checkbox" class="enable" checked /></label><div class="name">천장 몰딩 (방1개 당)</div></div>
+        <div class="qty-controls">
+          <button class="btn" data-action="dec">-</button>
+          <input type="number" class="qty" value="0" min="0" />
+          <button class="btn" data-action="inc">+</button>
+        </div>
+      </div>
+
+      <div class="row" data-key="floor_molding">
+        <div class="left"><label><input type="checkbox" class="enable" checked /></label><div class="name">바닥 몰딩 (방1개 당)</div></div>
+        <div class="qty-controls">
+          <button class="btn" data-action="dec">-</button>
+          <input type="number" class="qty" value="0" min="0" />
+          <button class="btn" data-action="inc">+</button>
+        </div>
+      </div>
+
+      <div class="row" data-key="single_door">
+        <div class="left"><label><input type="checkbox" class="enable" checked /></label><div class="name">문 짝</div></div>
+        <div class="qty-controls">
+          <button class="btn" data-action="dec">-</button>
+          <input type="number" class="qty" value="0" min="0" />
+          <button class="btn" data-action="inc">+</button>
+        </div>
+      </div>
+
+      <div class="row" data-key="door_frame">
+        <div class="left"><label><input type="checkbox" class="enable" checked /></label><div class="name">문 틀</div></div>
+        <div class="qty-controls">
+          <button class="btn" data-action="dec">-</button>
+          <input type="number" class="qty" value="0" min="0" />
+          <button class="btn" data-action="inc">+</button>
+        </div>
+      </div>
+
+      <div class="row" data-key="sash_single">
+        <div class="left"><label><input type="checkbox" class="enable" checked /></label><div class="name">샷시 (단창)</div></div>
+        <div class="qty-controls">
+          <button class="btn" data-action="dec">-</button>
+          <input type="number" class="qty" value="0" min="0" />
+          <button class="btn" data-action="inc">+</button>
+        </div>
+      </div>
+
+      <div class="row" data-key="sash_double">
+        <div class="left"><label><input type="checkbox" class="enable" checked /></label><div class="name">샷시 (이중창)</div></div>
+        <div class="qty-controls">
+          <button class="btn" data-action="dec">-</button>
+          <input type="number" class="qty" value="0" min="0" />
+          <button class="btn" data-action="inc">+</button>
+        </div>
+      </div>
+
+      <div class="row" data-key="wardrobe_2">
+        <div class="left"><label><input type="checkbox" class="enable" checked /></label><div class="name">붙박이장 (문2개인 장)</div></div>
+        <div class="qty-controls">
+          <button class="btn" data-action="dec">-</button>
+          <input type="number" class="qty" value="0" min="0" />
+          <button class="btn" data-action="inc">+</button>
+        </div>
+      </div>
+
+      <div class="row" data-key="wardrobe_4">
+        <div class="left"><label><input type="checkbox" class="enable" checked /></label><div class="name">붙박이장 (문4개인 장)</div></div>
+        <div class="qty-controls">
+          <button class="btn" data-action="dec">-</button>
+          <input type="number" class="qty" value="0" min="0" />
+          <button class="btn" data-action="inc">+</button>
+        </div>
+      </div>
+
+      <div class="row" data-key="kitchen_upper">
+        <div class="left"><label><input type="checkbox" class="enable" checked /></label><div class="name">싱크대 상부장 (ㄱ자 상부장)</div></div>
+        <div class="qty-controls">
+          <button class="btn" data-action="dec">-</button>
+          <input type="number" class="qty" value="0" min="0" />
+          <button class="btn" data-action="inc">+</button>
+        </div>
+      </div>
+
+      <div class="row" data-key="kitchen_lower">
+        <div class="left"><label><input type="checkbox" class="enable" checked /></label><div class="name">싱크대 하부장 (ㄱ자 하부장)</div></div>
+        <div class="qty-controls">
+          <button class="btn" data-action="dec">-</button>
+          <input type="number" class="qty" value="0" min="0" />
+          <button class="btn" data-action="inc">+</button>
+        </div>
+      </div>
+
+      <div class="row" data-key="fridge_case">
+        <div class="left"><label><input type="checkbox" class="enable" checked /></label><div class="name">냉장고장</div></div>
+        <div class="qty-controls">
+          <button class="btn" data-action="dec">-</button>
+          <input type="number" class="qty" value="0" min="0" />
+          <button class="btn" data-action="inc">+</button>
+        </div>
+      </div>
+
+      <div class="row" data-key="living_ceiling">
+        <div class="left"><label><input type="checkbox" class="enable" checked /></label><div class="name">거실 우물천장</div></div>
+        <div class="qty-controls">
+          <button class="btn" data-action="dec">-</button>
+          <input type="number" class="qty" value="0" min="0" />
+          <button class="btn" data-action="inc">+</button>
+        </div>
+      </div>
+
+      <div class="row" data-key="three_panel_door">
+        <div class="left"><label><input type="checkbox" class="enable" checked /></label><div class="name">3연동 현관 중문</div></div>
+        <div class="qty-controls">
+          <button class="btn" data-action="dec">-</button>
+          <input type="number" class="qty" value="0" min="0" />
+          <button class="btn" data-action="inc">+</button>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="controls">
+      <button id="reset" class="btn">초기화</button>
+      <button id="editCompany" class="btn">업체정보</button>
+    </div>
+
+    <div class="total">
+      <div class="line"><div>총 금액</div><div id="totalPrice">0 원</div></div>
+      <div class="note">자재,부자재 포함 견적입니다</div>
+      <div class="note">위 견적은 기본 구조의 견적입니다. 확인 후 견적 추가 될 수 있습니다.</div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // 관리자 비밀번호
+  const ADMIN_PWD = 'admin';
+
+  // 내부 단가(원 단위, 화면에는 노출하지 않음)
+  const PRICES = {
+    door: 180000,
+    ceiling_molding: 65000,
+    floor_molding: 55000,
+    single_door: 90000,
+    door_frame: 90000,
+    sash_single: 130000,
+    sash_double: 230000,
+    wardrobe_2: 110000,
+    wardrobe_4: 170000,
+    kitchen_upper: 200000,
+    kitchen_lower: 200000,
+    fridge_case: 170000,
+    living_ceiling: 100000,
+    three_panel_door: 290000
+  };
+
+  // 표시 최소값 (관리자에서 변경 가능) - 기본 280,000원
+  let MIN_DISPLAY = 280000;
+
+  // 사용자 활성화 플래그: 사용자가 + 또는 qty 변경으로 한 번이라도 상호작용하면 true
+  let userActivated = false;
+
+  const fmt = n => n.toLocaleString('ko-KR') + ' 원';
+
+  function collectItems() {
+    const rows = Array.from(document.querySelectorAll('#items .row'));
+    return rows.map(row => {
+      const key = row.getAttribute('data-key');
+      const enabled = row.querySelector('.enable').checked;
+      const qty = Math.max(0, Math.floor(Number(row.querySelector('.qty').value) || 0));
+      return { key, enabled, qty, price: PRICES[key] || 0 };
+    });
+  }
+
+  function calcSumRaw() {
+    const items = collectItems();
+    return items.reduce((s,it) => s + (it.enabled ? it.price * it.qty : 0), 0);
+  }
+
+  // 변경된 규칙: rawSum <= MIN_DISPLAY -> MIN_DISPLAY 표시
+  // rawSum >= MIN_DISPLAY + 1 -> 실제 rawSum 표시
+  // 초기(미활성) 상태: 0원 표시
+  function computeDisplayTotal(rawSum) {
+    rawSum = Math.floor(rawSum);
+    if (!userActivated) return 0;
+    if (rawSum <= MIN_DISPLAY) return MIN_DISPLAY;
+    return rawSum; // rawSum >= MIN_DISPLAY + 1 인 경우 (즉 1원이라도 초과하면 실제 합계 표시)
+  }
+
+  function updateUI() {
+    const raw = calcSumRaw();
+    const disp = computeDisplayTotal(raw);
+    document.getElementById('totalPrice').textContent = fmt(disp);
+  }
+
+  // + / - 버튼 이벤트
+  document.getElementById('items').addEventListener('click', function(e) {
+    const btn = e.target.closest('button[data-action]');
+    if(!btn) return;
+    const action = btn.getAttribute('data-action');
+    const row = btn.closest('.row');
+    const input = row.querySelector('.qty');
+    let v = Number(input.value) || 0;
+    if (action === 'inc') {
+      v = v + 1;
+      input.value = v;
+      if (v > 0) userActivated = true;
+    } else if (action === 'dec') {
+      v = Math.max(0, v - 1);
+      input.value = v;
+      // 마이너스도 동일 규칙: userActivated는 이전 상호작용을 유지
+    }
+    updateUI();
+  });
+
+  // 직접 입력: 정수 보장, 0->1 이상이면 활성화
+  document.getElementById('items').addEventListener('input', function(e) {
+    if (!e.target.classList || !e.target.classList.contains('qty')) return;
+    let v = Math.max(0, Math.floor(Number(e.target.value) || 0));
+    e.target.value = v;
+    if (v > 0) userActivated = true;
+    updateUI();
+  });
+
+  // 체크박스 변경
+  document.getElementById('items').addEventListener('change', function(e) {
+    if (!e.target.classList || !e.target.classList.contains('enable')) return;
+    updateUI();
+  });
+
+  // 초기화
+  document.getElementById('reset').addEventListener('click', function() {
+    document.querySelectorAll('#items .row').forEach(row => {
+      row.querySelector('.qty').value = 0;
+      row.querySelector('.enable').checked = true;
+    });
+    userActivated = false;
+    updateUI();
+  });
+
+  // 업체정보 편집 (관리자 전용)
+  document.getElementById('editCompany').addEventListener('click', function() {
+    const pwd = prompt('관리자 비밀번호를 입력하세요:');
+    if (pwd === null) return;
+    if (pwd !== ADMIN_PWD) { alert('비밀번호가 틀렸습니다.'); return; }
+    const currentNameEl = document.querySelectorAll('.company-line')[0];
+    const currentPhoneEl = document.querySelectorAll('.company-line')[1];
+    const currentName = currentNameEl ? currentNameEl.textContent.replace('시공 업체: ','') : '';
+    const currentPhone = currentPhoneEl ? currentPhoneEl.textContent.replace('전화 : ','') : '';
+    const comp = prompt('업체명 입력 (빈칸 = 유지):', currentName);
+    if (comp === null) return;
+    const phone = prompt('전화번호 입력 (빈칸 = 유지):', currentPhone);
+    if (phone === null) return;
+    if (comp.trim() !== '' && currentNameEl) currentNameEl.textContent = '시공 업체: ' + comp.trim();
+    if (phone.trim() !== '' && currentPhoneEl) currentPhoneEl.textContent = '전화 : ' + phone.trim();
+  });
+
+  // 관리자 버튼: 단가 및 MIN_DISPLAY 편집 (prompt 방식)
+  document.getElementById('adminBtn').addEventListener('click', function() {
+    const pwd = prompt('관리자 비밀번호를 입력하세요:');
+    if (pwd === null) return;
+    if (pwd !== ADMIN_PWD) { alert('비밀번호가 틀렸습니다.'); return; }
+
+    const keys = [
+      'door','ceiling_molding','floor_molding','single_door','door_frame',
+      'sash_single','sash_double','wardrobe_2','wardrobe_4',
+      'kitchen_upper','kitchen_lower','fridge_case','living_ceiling','three_panel_door'
+    ];
+    const names = {
+      door:'현관문', ceiling_molding:'천장 몰딩(방1개 당)', floor_molding:'바닥 몰딩(방1개 당)',
+      single_door:'문 짝', door_frame:'문 틀', sash_single:'샷시(단창)', sash_double:'샷시(이중창)',
+      wardrobe_2:'붙박이장(문2개인 장)', wardrobe_4:'붙박이장(문4개인 장)',
+      kitchen_upper:'싱크대 상부장(ㄱ자 상부장)', kitchen_lower:'싱크대 하부장(ㄱ자 하부장)',
+      fridge_case:'냉장고장', living_ceiling:'거실 우물천장', three_panel_door:'3연동 현관 중문'
+    };
+
+    for (const k of keys) {
+      let input = prompt(names[k] + ' 단가 입력 (원 단위, 빈칸 = 유지):', PRICES[k]);
+      if (input === null) { alert('편집이 취소되었습니다.'); return; }
+      input = input.trim();
+      if (input !== '') {
+        const num = Math.floor(Number(input.replace(/,/g,'')));
+        if (Number.isNaN(num) || num < 0) { alert('유효한 숫자를 입력하세요. 편집 중단'); return; }
+        PRICES[k] = num;
+      }
+    }
+
+    let minIn = prompt('표시 최소값(MIN_DISPLAY) 입력 (원 단위, 현재: ' + MIN_DISPLAY.toLocaleString('ko-KR') + '):', MIN_DISPLAY);
+    if (minIn !== null) {
+      minIn = minIn.trim();
+      if (minIn !== '') {
+        const mn = Math.floor(Number(minIn.replace(/,/g,'')));
+        if (Number.isNaN(mn) || mn < 0) { alert('유효한 숫자입니다. 최소값은 변경되지 않았습니다.'); }
+        else MIN_DISPLAY = mn;
+      }
+    }
+
+    alert('단가/최소값이 업데이트되었습니다.');
+    updateUI();
+  });
+
+  // 초기 계산
+  updateUI();
+</script>
+</body>
+</html>
